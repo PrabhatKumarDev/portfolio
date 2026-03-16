@@ -94,3 +94,72 @@ export const getExpenses = async (req, res) => {
     });
   }
 };
+
+export const updateExpense = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { merchant, amount, category, paymentMethod, date, note } = req.body;
+
+    const expense = await Expense.findOne({
+      _id: id,
+      user: req.user._id,
+    });
+
+    if (!expense) {
+      return res.status(404).json({
+        message: "Expense not found",
+      });
+    }
+
+    if (merchant) {
+      expense.merchant = merchant.trim();
+      expense.normalizedMerchant = normalizeMerchant(merchant);
+    }
+
+    if (amount) expense.amount = Number(amount);
+    if (category) expense.category = category.trim();
+    if (paymentMethod) expense.paymentMethod = paymentMethod.trim();
+    if (date) expense.date = date;
+    if (note !== undefined) expense.note = note;
+
+    await expense.save();
+
+    return res.status(200).json({
+      message: "Expense updated successfully",
+      expense,
+    });
+  } catch (error) {
+    console.error("Update expense error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while updating expense",
+    });
+  }
+};
+
+export const deleteExpense = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const expense = await Expense.findOneAndDelete({
+      _id: id,
+      user: req.user._id,
+    });
+
+    if (!expense) {
+      return res.status(404).json({
+        message: "Expense not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Expense deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete expense error:", error.message);
+
+    return res.status(500).json({
+      message: "Server error while deleting expense",
+    });
+  }
+};
