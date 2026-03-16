@@ -7,6 +7,7 @@ import TrackerList from "../components/TrackerList";
 import CreateTrackerForm from "../components/CreateTrackerForm";
 import CreateExpenseForm from "../components/CreateExpenseForm";
 import ExpenseList from "../components/ExpenseList";
+import { deleteExpense } from "../api/expenseApi";
 import {
   clearAuthData,
   getUser,
@@ -55,6 +56,16 @@ function DashboardPage() {
     setActiveTrackerState(tracker);
     setActiveTracker(tracker);
     fetchExpensesForTracker(tracker._id);
+  };
+
+  const handleDeleteExpense = async (id) => {
+    try {
+      await deleteExpense(id);
+
+      setExpenses((prev) => prev.filter((exp) => exp._id !== id));
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete expense");
+    }
   };
 
   const handleCreateTracker = async (formData) => {
@@ -123,8 +134,9 @@ function DashboardPage() {
 
         if (storedTracker) {
           trackerToUse =
-            trackerData.trackers.find((tracker) => tracker._id === storedTracker._id) ||
-            null;
+            trackerData.trackers.find(
+              (tracker) => tracker._id === storedTracker._id,
+            ) || null;
         }
 
         if (!trackerToUse && trackerData.trackers.length > 0) {
@@ -158,7 +170,8 @@ function DashboardPage() {
       </div>
     );
   }
-
+ const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+const totalTransactions = expenses.length;
   return (
     <div className="min-h-screen bg-zinc-950 text-white px-6 py-10">
       <div className="max-w-7xl mx-auto">
@@ -195,6 +208,25 @@ function DashboardPage() {
               </p>
             </div>
 
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-6">
+  <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
+    <p className="text-sm text-zinc-400">Total Spent</p>
+    <h3 className="text-2xl font-semibold mt-1">₹{totalAmount}</h3>
+  </div>
+
+  <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
+    <p className="text-sm text-zinc-400">Transactions</p>
+    <h3 className="text-2xl font-semibold mt-1">{totalTransactions}</h3>
+  </div>
+
+  <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
+    <p className="text-sm text-zinc-400">Current Tracker</p>
+    <h3 className="text-2xl font-semibold mt-1">
+      {activeTracker?.name || "-"}
+    </h3>
+  </div>
+</div>
+
             <div>
               <h2 className="text-2xl font-semibold mb-4">Your Trackers</h2>
               <TrackerList
@@ -208,6 +240,7 @@ function DashboardPage() {
               expenses={expenses}
               loading={expensesLoading}
               activeTracker={activeTracker}
+              onDeleteExpense={handleDeleteExpense}
             />
           </div>
 

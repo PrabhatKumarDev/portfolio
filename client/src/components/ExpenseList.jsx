@@ -1,4 +1,5 @@
-function ExpenseList({ expenses, loading, activeTracker }) {
+import { deleteExpense } from "../api/expenseApi";
+function ExpenseList({ expenses, loading, activeTracker, onDeleteExpense }) {
   if (!activeTracker) {
     return (
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
@@ -20,7 +21,8 @@ function ExpenseList({ expenses, loading, activeTracker }) {
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
         <h2 className="text-xl font-semibold mb-2">Expenses</h2>
         <p className="text-zinc-400">
-          No expenses yet for <span className="text-white">{activeTracker.name}</span>.
+          No expenses yet for{" "}
+          <span className="text-white">{activeTracker.name}</span>.
         </p>
       </div>
     );
@@ -41,7 +43,9 @@ function ExpenseList({ expenses, loading, activeTracker }) {
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h3 className="text-lg font-medium text-white">{expense.merchant}</h3>
+                <h3 className="text-lg font-medium text-white">
+                  {expense.merchant}
+                </h3>
                 <p className="text-sm text-zinc-400 mt-1">
                   {expense.category} • {expense.paymentMethod}
                 </p>
@@ -54,10 +58,16 @@ function ExpenseList({ expenses, loading, activeTracker }) {
               </div>
 
               <div className="text-left sm:text-right">
-                <p className="text-xl font-semibold text-white">₹{expense.amount}</p>
-                <p className="text-xs text-zinc-500 mt-1">
-                  {expense.normalizedMerchant}
+                <p className="text-xl font-semibold text-white">
+                  ₹{expense.amount}
                 </p>
+
+                <button
+                  onClick={() => onDeleteExpense(expense._id)}
+                  className="mt-2 text-xs text-red-400 hover:text-red-300"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
