@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createTracker, getTrackers } from "../api/trackerApi";
+import { createExpense, getExpenses } from "../api/expenseApi";
 import { getCurrentUser } from "../api/authApi";
 import TrackerList from "../components/TrackerList";
 import CreateTrackerForm from "../components/CreateTrackerForm";
+import CreateExpenseForm from "../components/CreateExpenseForm";
+import ExpenseList from "../components/ExpenseList";
 import {
   clearAuthData,
   getUser,
@@ -22,8 +25,11 @@ function DashboardPage() {
   const [user, setUser] = useState(getUser());
   const [trackers, setTrackers] = useState([]);
   const [activeTracker, setActiveTrackerState] = useState(getActiveTracker());
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [trackerLoading, setTrackerLoading] = useState(false);
+  const [expenseLoading, setExpenseLoading] = useState(false);
+  const [expensesLoading, setExpensesLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleLogout = () => {
@@ -32,16 +38,31 @@ function DashboardPage() {
     navigate("/login");
   };
 
+  const fetchExpensesForTracker = async (trackerId) => {
+    try {
+      setExpensesLoading(true);
+      const data = await getExpenses(trackerId);
+      setExpenses(data.expenses);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load expenses");
+      setExpenses([]);
+    } finally {
+      setExpensesLoading(false);
+    }
+  };
+
   const handleSelectTracker = (tracker) => {
     setActiveTrackerState(tracker);
     setActiveTracker(tracker);
+    fetchExpensesForTracker(tracker._id);
   };
 
   const handleCreateTracker = async (formData) => {
     try {
       setTrackerLoading(true);
-      const data = await createTracker(formData);
+      setError("");
 
+      const data = await createTracker(formData);
       const updatedTrackers = [...trackers, data.tracker];
       setTrackers(updatedTrackers);
 
@@ -55,6 +76,22 @@ function DashboardPage() {
       return false;
     } finally {
       setTrackerLoading(false);
+    }
+  };
+
+  const handleCreateExpense = async (formData) => {
+    try {
+      setExpenseLoading(true);
+      setError("");
+
+      const data = await createExpense(formData);
+      setExpenses((prev) => [data.expense, ...prev]);
+      return true;
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to create expense");
+      return false;
+    } finally {
+      setExpenseLoading(false);
     }
   };
 
@@ -82,21 +119,24 @@ function DashboardPage() {
 
         const storedTracker = getActiveTracker();
 
-        if (storedTracker) {
-          const matchedTracker = trackerData.trackers.find(
-            (tracker) => tracker._id === storedTracker._id
-          );
+        let trackerToUse = null;
 
-          if (matchedTracker) {
-            setActiveTrackerState(matchedTracker);
-            setActiveTracker(matchedTracker);
-          } else if (trackerData.trackers.length > 0) {
-            setActiveTrackerState(trackerData.trackers[0]);
-            setActiveTracker(trackerData.trackers[0]);
-          }
-        } else if (trackerData.trackers.length > 0) {
-          setActiveTrackerState(trackerData.trackers[0]);
-          setActiveTracker(trackerData.trackers[0]);
+        if (storedTracker) {
+          trackerToUse =
+            trackerData.trackers.find((tracker) => tracker._id === storedTracker._id) ||
+            null;
+        }
+
+        if (!trackerToUse && trackerData.trackers.length > 0) {
+          trackerToUse = trackerData.trackers[0];
+        }
+
+        if (trackerToUse) {
+          setActiveTrackerState(trackerToUse);
+          setActiveTracker(trackerToUse);
+          await fetchExpensesForTracker(trackerToUse._id);
+        } else {
+          setExpenses([]);
         }
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load dashboard");
@@ -121,7 +161,7 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white px-6 py-10">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -144,7 +184,7 @@ function DashboardPage() {
           </div>
         )}
 
-        <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
               <h2 className="text-xl font-semibold mb-2">Active Tracker</h2>
@@ -163,12 +203,24 @@ function DashboardPage() {
                 onSelectTracker={handleSelectTracker}
               />
             </div>
+
+            <ExpenseList
+              expenses={expenses}
+              loading={expensesLoading}
+              activeTracker={activeTracker}
+            />
           </div>
 
-          <div>
+          <div className="space-y-6">
             <CreateTrackerForm
               onCreateTracker={handleCreateTracker}
               loading={trackerLoading}
+            />
+
+            <CreateExpenseForm
+              activeTracker={activeTracker}
+              onCreateExpense={handleCreateExpense}
+              loading={expenseLoading}
             />
           </div>
         </div>
