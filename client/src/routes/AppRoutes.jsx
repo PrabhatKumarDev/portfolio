@@ -4,26 +4,53 @@ import RegisterPage from "../pages/RegisterPage";
 import DashboardPage from "../pages/DashboardPage";
 import { isAuthenticated } from "../utils/authStorage";
 
-function AppRoutes() {
-  const authenticated = isAuthenticated();
+function ProtectedRoute({ children }) {
+  return isAuthenticated() ? children : <Navigate to="/login" replace />;
+}
 
+function PublicRoute({ children }) {
+  return !isAuthenticated() ? children : <Navigate to="/dashboard" replace />;
+}
+
+function HomeRedirect() {
+  return (
+    <Navigate
+      to={isAuthenticated() ? "/dashboard" : "/login"}
+      replace
+    />
+  );
+}
+
+function AppRoutes() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={<Navigate to={authenticated ? "/dashboard" : "/login"} replace />}
-      />
+      <Route path="/" element={<HomeRedirect />} />
+
       <Route
         path="/login"
-        element={!authenticated ? <LoginPage /> : <Navigate to="/dashboard" replace />}
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
       />
+
       <Route
         path="/register"
-        element={!authenticated ? <RegisterPage /> : <Navigate to="/dashboard" replace />}
+        element={
+          <PublicRoute>
+            <RegisterPage />
+          </PublicRoute>
+        }
       />
+
       <Route
         path="/dashboard"
-        element={authenticated ? <DashboardPage /> : <Navigate to="/login" replace />}
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
       />
     </Routes>
   );

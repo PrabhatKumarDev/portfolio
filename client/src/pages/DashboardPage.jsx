@@ -1,14 +1,58 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { clearAuthData, getUser } from "../utils/authStorage";
+import { getCurrentUser } from "../api/authApi";
+import {
+  clearAuthData,
+  getUser,
+  setAuthData,
+  getToken,
+} from "../utils/authStorage";
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const user = getUser();
+
+  const [user, setUser] = useState(getUser());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const handleLogout = () => {
     clearAuthData();
     navigate("/login");
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const data = await getCurrentUser();
+        setUser(data.user);
+
+        const token = getToken();
+        if (token) {
+          setAuthData({
+            token,
+            user: data.user,
+          });
+        }
+      } catch (err) {
+        console.error("Dashboard /me error:", err.response?.data || err.message);
+        setError(err.response?.data?.message || "Failed to load user");
+        clearAuthData();
+        navigate("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+        <p className="text-zinc-400">Loading dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white px-6 py-10">
@@ -30,10 +74,12 @@ function DashboardPage() {
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="text-xl font-semibold mb-2">Auth Setup Complete</h2>
+          <h2 className="text-xl font-semibold mb-2">Protected Auth Working</h2>
           <p className="text-zinc-400">
-            Next we will secure routes properly and then start the expense module.
+            Your dashboard is now verified through the backend.
           </p>
+
+          {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
         </div>
       </div>
     </div>

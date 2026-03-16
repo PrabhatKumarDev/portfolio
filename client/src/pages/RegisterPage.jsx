@@ -23,23 +23,30 @@ function RegisterPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const data = await registerUser(formData);
-      setAuthData({
-        token: data.token,
-        user: data.user,
-      });
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const data = await registerUser(formData);
+
+    console.log("Register response:", data);
+
+    setAuthData({
+      token: data.token,
+      user: data.user,
+    });
+
+    console.log("Saved token:", localStorage.getItem("expense_tracker_token"));
+
+    navigate("/dashboard");
+  } catch (err) {
+    console.error("Register error:", err.response?.data || err.message);
+    setError(err.response?.data?.message || "Registration failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
