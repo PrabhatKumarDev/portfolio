@@ -14,6 +14,8 @@ import Insights from "../components/Insights";
 import MonthlyChart from "../components/MonthlyChart";
 import CategoryChart from "../components/CategoryChart";
 import ExpenseFilters from "../components/ExpenseFilters";
+import ThemeToggle from "../components/ThemeToggle";
+import ExportButtons from "../components/ExportButtons";
 import {
   clearAuthData,
   getUser,
@@ -26,7 +28,7 @@ import {
   setActiveTracker,
 } from "../utils/trackerStorage";
 
-function DashboardPage() {
+function DashboardPage({theme,setTheme}) {
   const navigate = useNavigate();
 
   const [user, setUser] = useState(getUser());
@@ -238,12 +240,18 @@ const handleSaveExpense = async (id, formData) => {
             </p>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="rounded-xl bg-zinc-800 border border-zinc-700 px-4 py-2 hover:border-violet-500 transition"
-          >
-            Logout
-          </button>
+          <div className="flex gap-3">
+  <ThemeToggle
+    theme={theme}
+    onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
+  />
+  <button
+    onClick={handleLogout}
+    className="rounded-xl bg-zinc-800 border border-zinc-700 px-4 py-2 hover:border-violet-500 transition"
+  >
+    Logout
+  </button>
+</div>
         </div>
 
         {error && (
@@ -325,7 +333,9 @@ const handleSaveExpense = async (id, formData) => {
               onCreateExpense={handleCreateExpense}
               loading={expenseLoading}
             />
+            <ExportButtons expenses={filteredExpenses} activeTracker={activeTracker} />
           </div>
+          
         </div>
       </div>
       <EditExpenseModal

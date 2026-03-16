@@ -13,15 +13,10 @@ function PublicRoute({ children }) {
 }
 
 function HomeRedirect() {
-  return (
-    <Navigate
-      to={isAuthenticated() ? "/dashboard" : "/login"}
-      replace
-    />
-  );
+  return <Navigate to={isAuthenticated() ? "/dashboard" : "/login"} replace />;
 }
 
-function AppRoutes() {
+function AppRoutes({ theme, setTheme }) {
   return (
     <Routes>
       <Route path="/" element={<HomeRedirect />} />
@@ -48,7 +43,7 @@ function AppRoutes() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <DashboardPage theme={theme} setTheme={setTheme} />
           </ProtectedRoute>
         }
       />
