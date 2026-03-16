@@ -8,6 +8,9 @@ import CreateTrackerForm from "../components/CreateTrackerForm";
 import CreateExpenseForm from "../components/CreateExpenseForm";
 import ExpenseList from "../components/ExpenseList";
 import { deleteExpense } from "../api/expenseApi";
+import MerchantAnalytics from "../components/MerchantAnalytics";
+import MonthlyChart from "../components/MonthlyChart";
+import CategoryChart from "../components/CategoryChart";
 import {
   clearAuthData,
   getUser,
@@ -242,7 +245,17 @@ const totalTransactions = expenses.length;
               activeTracker={activeTracker}
               onDeleteExpense={handleDeleteExpense}
             />
+            <div className="grid gap-6 lg:grid-cols-2 mt-6">
+  <MonthlyChart expenses={expenses} />
+  <CategoryChart expenses={expenses} />
+</div>
+
+<div className="mt-6">
+  <MerchantAnalytics expenses={expenses} />
+</div>
+
           </div>
+          
 
           <div className="space-y-6">
             <CreateTrackerForm
