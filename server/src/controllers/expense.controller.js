@@ -1,13 +1,25 @@
 import Expense from "../models/expense.model.js";
+import Tracker from "../models/tracker.model.js";
 import normalizeMerchant from "../utils/normalizeMerchant.js";
 
 export const createExpense = async (req, res) => {
   try {
-    const { merchant, amount, category, paymentMethod, date, note } = req.body;
+    const { trackerId, merchant, amount, category, paymentMethod, date, note } = req.body;
 
-    if (!merchant || !amount || !category || !date) {
+    if (!trackerId || !merchant || !amount || !category || !date) {
       return res.status(400).json({
-        message: "Merchant, amount, category, and date are required",
+        message: "Tracker, merchant, amount, category, and date are required",
+      });
+    }
+
+    const tracker = await Tracker.findOne({
+      _id: trackerId,
+      user: req.user._id,
+    });
+
+    if (!tracker) {
+      return res.status(404).json({
+        message: "Tracker not found",
       });
     }
 
@@ -21,6 +33,7 @@ export const createExpense = async (req, res) => {
 
     const expense = await Expense.create({
       user: req.user._id,
+      tracker: tracker._id,
       merchant: merchant.trim(),
       normalizedMerchant: normalizeMerchant(merchant),
       amount: parsedAmount,
@@ -44,10 +57,31 @@ export const createExpense = async (req, res) => {
 
 export const getExpenses = async (req, res) => {
   try {
-    const expenses = await Expense.find({ user: req.user._id }).sort({
-      date: -1,
-      createdAt: -1,
-    });
+    const { trackerId } = req.query;
+
+    const filter = { user: req.user._id };
+
+    if (trackerId) {
+      const tracker = await Tracker.findOne({
+        _id: trackerId,
+        user: req.user._id,
+      });
+
+      if (!tracker) {
+        return res.status(404).json({
+          message: "Tracker not found",
+        });
+      }
+
+      filter.tracker = trackerId;
+    }
+
+    const expenses = await Expense.find(filter)
+      .populate("tracker", "name color isDefault")
+      .sort({
+        date: -1,
+        createdAt: -1,
+      });
 
     return res.status(200).json({
       count: expenses.length,

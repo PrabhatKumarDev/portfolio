@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
+import Tracker from "../models/tracker.model.js";
 import generateToken from "../utils/generateToken.js";
 
 export const registerUser = async (req, res) => {
@@ -12,7 +13,9 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(409).json({
@@ -24,8 +27,16 @@ export const registerUser = async (req, res) => {
 
     const user = await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password: hashedPassword,
+    });
+
+    const defaultTracker = await Tracker.create({
+      user: user._id,
+      name: "Personal",
+      description: "Default personal expense tracker",
+      color: "violet",
+      isDefault: true,
     });
 
     const token = generateToken(user._id);
@@ -37,6 +48,13 @@ export const registerUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+      },
+      defaultTracker: {
+        id: defaultTracker._id,
+        name: defaultTracker.name,
+        description: defaultTracker.description,
+        color: defaultTracker.color,
+        isDefault: defaultTracker.isDefault,
       },
     });
   } catch (error) {
